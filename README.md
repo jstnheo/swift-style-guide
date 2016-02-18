@@ -12,6 +12,7 @@
 	* [Structs & Classes](#structs--classes)
 	* [Bracket Syntax](#bracket-syntax)
 	* [Force Unwrap](#force-unwrap)
+	* [Error Handling](#error-handling)
 	* [Access Modifiers](#access-modifiers)
 	* [Type Declarations](#type-declarations)
 	* [Type Inference](#type-inference)
@@ -332,6 +333,60 @@ to exist for the lifetime of the view controller object:
 
 ```
 
+### Error Handling ###
+
+The emergence of `try / catch` in Swift 2 has added powerful ways to define and return errors when something fails. The emergence of `ErrorType`
+as well for defining errors makes error definitions much more convenient over the cumbersome `NSError`. Because of this, for functions where operations can fail, you should always
+define it as `throws` and return a well-defined `ErrorType`.
+
+Consider the following contrived example:
+
+```swift
+
+func multiplyEvens(evenNumber: Int) -> Int? {
+	guard evenNumber % 2 == 0 else {
+		return nil
+	}
+	
+	return evenNumber * 2
+}
+
+```
+
+The function above fails because it only expects evens and returns an optional if that is violated. While this works and is simple, it
+is more Objective-C than Swift in its composition. For Swift, instead consider refactoring it as follows:
+
+```swift
+
+internal enum NumberError: ErrorType {
+	case NotEven
+}
+
+func multiplyEvens(evenNumber: Int) throws -> Int {
+	guard evenNumber % 2 == 0 else {
+		throw NumberError.NotEven
+	}
+	
+	return evenNumber * 2
+}
+
+```
+
+The above, while slightly more cumbersome, is much more explicit and helpful to the caller than the previous. Further, try/catch semantics
+allow the caller to still retain the old optional functionality if the error is not relevant:
+
+```swift
+let result: Int? = try? multiplyEvens(1)
+```
+
+Or, if the caller knows that it will not violate any of the parameters for a valid input:
+
+```swift
+let result: Int = try! multiplyEvens(2)
+```
+
+*Rationale* Try/Catch semantics allow for much more robust error handling and should be the preferred method for handling operations that can fail instead
+of returning a `nil` value -- especially since the caller can, using `try`, `try?`, or `try!`, handle the output in any way they so desire.
 
 ### Access Modifiers ###
 
